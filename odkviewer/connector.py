@@ -14,6 +14,10 @@ MAX_ENTRIES = '100'
 
 # TODO: Handle non-200 HTTP status codes.
 
+# Helper method
+def get_id_from_ref(refid):
+    return refid.split('/')[-1]
+
 class OdkConnector:
     
     def __init__(self, odk_url, odk_user, odk_pwd):
@@ -21,7 +25,7 @@ class OdkConnector:
         self.user = odk_user
         self.pwd = odk_pwd
         self.auth = requests.auth.HTTPDigestAuth(self.user, self.pwd)
-
+        
     def get_forms(self):
     
         # Get the form list
@@ -68,7 +72,7 @@ class OdkConnector:
                 elements = {}
                 for element in translation:
                     # Get the last element of the path
-                    eid = element.get('id').split('/')[-1]
+                    eid = get_id_from_ref(element.get('id'))
                     value = element[0].text
                     if eid not in labels:
                         labels[eid] = {langid: value}
@@ -79,8 +83,36 @@ class OdkConnector:
             # Now we need to get the information on the actual questions and groups
             # For the groups, the description is in head/model/instance
             # It can also be found in the body, as body/group for each group.
-            
-            
+            groups_labels = {} 
+            # The group info is in the body
+            body = formdata.find('{http://www.w3.org/1999/xhtml}body')
+            groupsnodes = body.findall('{http://www.w3.org/2002/xforms}group')
+            for group in groupsnodes:
+                # The id
+                gid = get_id_from_ref(group.get('ref'))
+                # The label
+                label = group.find('{http://www.w3.org/2002/xforms}label').text
+                # The questions
+                questions = []
+                for q in group.getchildren():
+                    if '}label' in q.tag:
+                        continue
+                    qdata = {'qid': get_id_from_ref(q.get('ref')), 'options':[]}
+                    for qdetails in q.getchildren():
+                        if '}label' in qdetails.tag:
+                            # The question
+                            qdata['question'] = qdetails.text
+                        else:
+                            # The items
+                            value = qdetails.find( '{http://www.w3.org/2002/xforms}value').text
+                            qdata['options'].append(value)
+                            
+                    questions.append(qdata)
+                if label in groups_labels:
+                    groups_labels[label]['groups'].append({'gid': gid, 'questions':questions})
+                else:
+                    groups_labels[label] = {'groups': [{'gid': gid, 'questions': questions}]}
+                finfo['groups'] = groups_labels
             # Add the info to the dict
             forms_info[form_id]['form'] = finfo
         return forms_info

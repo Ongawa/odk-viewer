@@ -1,0 +1,21 @@
+
+
+#headerrow {
+    border-bottom: 2px solid;
+    min-height: 75px;
+    height: calc(12vh);
+}
+
+#contentrow {
+    height: calc(88vh);
+}
+
+#lateralnav {
+    border-right: 2px solid;
+    height: 100%;
+}
+
+#formgroups {
+    display: none;
+    margin-top: 15px;
+}

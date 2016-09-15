@@ -23,30 +23,31 @@ def checkfid(formid):
     # If the form id is not in the form list, abort
     if formid not in forms.keys():
         flask.abort(404)
-    return forms
+    return forms.get(formid)
 
 
 @app.route('/api/v1/forms')
 def listforms():
+    if cache.has('forms'):
+        return flask.jsonify(cache.get('forms'))
     forms = conn.get_forms()
+    cache.set('forms', forms)
     return flask.jsonify(forms)
 
 @app.route('/api/v1/forms/<formid>')
 def getform(formid):
-    forms = checkfid(formid)
-    # Otherwise, get the form data
-    return flask.jsonify(forms.get(formid))
-    
+    form = checkfid(formid)
+    return flask.jsonify(form)
     
 @app.route('/api/v1/forms/<formid>/submissions')
 def getsubmissions(formid):
-    forms = checkfid(formid)
-    fdata = conn.get_submissions_from_form(formid, forms.get(formid))
+    form = checkfid(formid)
+    fdata = conn.get_submissions_from_form(formid, form)
     return flask.jsonify(fdata)
 
 @app.route('/')
 def main():
-    return "Ongawa ODK"
+    return flask.render_template('index.html')
 
 
 if __name__ == '__main__':
