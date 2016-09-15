@@ -16,7 +16,7 @@ You need python 2.7 to run this project, as well as the pip tool to install the 
 
 ## Deployment
 
-This deploys as a regular python wsgi application.Edit the config.py to provide your odk instance configuration, and you are good to go. For testing, you can just run the app.py file with python and point your browser to localhost:5000
+This deploys as a regular python wsgi application. Edit the config.py, or create your own local_config.py with the values you want to overwrite, to provide your odk instance configuration, and you are good to go. For testing, you can just run the app.py file with python and point your browser to localhost:5000
 
     python app.py
     

@@ -26,18 +26,64 @@ function fillSelector(jQuery) {
     });    
 }
 
+function getQuestion(formid, groupName, gid, qid){
+    var grouplist = forms[formid].form.groups[groupName].groups;
+    var qdataresult = null;
+    $.each(grouplist, function(index, groupData){
+        if (groupData.gid == gid) {
+            $.each(groupData.questions, function(index, qData){
+                if(qid == qData.qid) {
+                    qdataresult = qData;
+                }
+            });
+        }
+    });
+    return qdataresult;
+}
+
 function displaySubmissionsFromGroup(slist, group) {
     // Get the group id from slist.data.groups[group].groups,
     // and iterate over the answers in submissions.values
     gids = [];
-    $.each(slist.data.groups[group].groups, function(value){
-        gids.append(value['gid']);
+    $.each(slist.data.groups[group].groups, function(index, value){
+        gids = gids.concat(value.gid);
     });
     
     // Now, over every answer
+    var questions = {};
     $.each(slist.values, function(key, value){
-        
+        // Iterate over every "group" and append the answers.
+        $.each(value, function(g, va){
+            if (gids.lastIndexOf(g) != -1){
+                $.each(va, function(qname, answer) {
+                    var qdata = getQuestion(slist.fid, group, g, qname);
+                    if (!(qdata.question in questions)){
+                        questions[qdata.question] = {};
+                        questions[qdata.question][answer] = 1;
+                    } else if (answer in questions[qdata.question]){
+                        questions[qdata.question][answer] = 1;
+                    } else {
+                        questions[qdata.question][answer] += 1;
+                    }
+                });
+            }
+        });
     });
+    
+    // Finally, list the answers
+    var content = '<div class="col-md-12"><h2>' + group + '</h2></div>';
+    content += '<div class="col-md-12">';
+    $.each(questions, function(question, answers){
+        content += '<h3>' + question + '</h3>';
+        content += '<table class=table table-striped">';
+        content += '<tr><th>Answer</th><th>Amount</th></tr>';
+        $.each(answers, function(answer, value){
+            content += '<tr><td>'+ answer + '</td><td>' + value + '</td></tr>';
+        });
+        content += '</table>';
+    });
+    content += '<div>';
+    $('#content').empty().append(content);
 }
 
 function updateNavBarOnClick(formid) {
@@ -45,10 +91,10 @@ function updateNavBarOnClick(formid) {
         var groupSelected = event.target;
         // Remove any active class and set it to the selected
         $('.navgroup').removeClass('active');
-        groupSelected.classList.add('active');
-        if(!formid in submissions) {
-            $.get('/api/api/v1/forms'+ formid + '/submissions', function(data){
-                submissions[formid] = data
+        groupSelected.parentNode.classList.add('active');
+        if(!(formid in submissions)) {
+            $.get('/api/v1/forms/'+ formid + '/submissions', function(data){
+                submissions[formid] = data;
                 displaySubmissionsFromGroup(submissions[formid], groupSelected.textContent);    
             });
         } else {
