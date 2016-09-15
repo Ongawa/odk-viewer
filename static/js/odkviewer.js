@@ -60,7 +60,7 @@ function displaySubmissionsFromGroup(slist, group) {
                     if (!(qdata.question in questions)){
                         questions[qdata.question] = {};
                         questions[qdata.question][answer] = 1;
-                    } else if (answer in questions[qdata.question]){
+                    } else if (!(answer in questions[qdata.question])){
                         questions[qdata.question][answer] = 1;
                     } else {
                         questions[qdata.question][answer] += 1;

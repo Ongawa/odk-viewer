@@ -193,7 +193,7 @@ class OdkConnector:
                     responses[response.tag.split('}')[-1]] = response.text
                 groups[group.tag.split('}')[-1]] = responses
            
-        result['values'][uuid] = groups
+            result['values'][uuid] = groups
         # Return this dict.   
         return result
             
