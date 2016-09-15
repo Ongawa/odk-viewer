@@ -42,48 +42,56 @@ function getQuestion(formid, groupName, gid, qid){
 }
 
 function displaySubmissionsFromGroup(slist, group) {
-    // Get the group id from slist.data.groups[group].groups,
-    // and iterate over the answers in submissions.values
-    gids = [];
-    $.each(slist.data.groups[group].groups, function(index, value){
-        gids = gids.concat(value.gid);
-    });
-    
-    // Now, over every answer
-    var questions = {};
-    $.each(slist.values, function(key, value){
-        // Iterate over every "group" and append the answers.
-        $.each(value, function(g, va){
-            if (gids.lastIndexOf(g) != -1){
-                $.each(va, function(qname, answer) {
-                    var qdata = getQuestion(slist.fid, group, g, qname);
-                    if (!(qdata.question in questions)){
-                        questions[qdata.question] = {};
-                        questions[qdata.question][answer] = 1;
-                    } else if (!(answer in questions[qdata.question])){
-                        questions[qdata.question][answer] = 1;
-                    } else {
-                        questions[qdata.question][answer] += 1;
-                    }
-                });
-            }
+    try {
+        // Get the group id from slist.data.groups[group].groups,
+        // and iterate over the answers in submissions.values
+        gids = [];
+        $.each(slist.data.groups[group].groups, function(index, value){
+            gids = gids.concat(value.gid);
         });
-    });
-    
-    // Finally, list the answers
-    var content = '<div class="col-md-12"><h2>' + group + '</h2></div>';
-    content += '<div class="col-md-12">';
-    $.each(questions, function(question, answers){
-        content += '<h3>' + question + '</h3>';
-        content += '<table class=table table-striped">';
-        content += '<tr><th>Answer</th><th>Amount</th></tr>';
-        $.each(answers, function(answer, value){
-            content += '<tr><td>'+ answer + '</td><td>' + value + '</td></tr>';
+        
+        // Now, over every answer
+        var questions = {};
+        $.each(slist.values, function(key, value){
+            // Iterate over every "group" and append the answers.
+            $.each(value, function(g, va){
+                if (gids.lastIndexOf(g) != -1){
+                    $.each(va, function(qname, answer) {
+                        var qdata = getQuestion(slist.fid, group, g, qname);
+                        if (!(qdata.question in questions)){
+                            questions[qdata.question] = {};
+                            questions[qdata.question][answer] = 1;
+                        } else if (!(answer in questions[qdata.question])){
+                            questions[qdata.question][answer] = 1;
+                        } else {
+                            questions[qdata.question][answer] += 1;
+                        }
+                    });
+                }
+            });
         });
-        content += '</table>';
-    });
-    content += '<div>';
-    $('#content').empty().append(content);
+        
+        // Finally, list the answers
+        var content = '<div class="col-md-12"><h2>' + group + '</h2></div>';
+        content += '<div class="col-md-12">';
+        $.each(questions, function(question, answers){
+            content += '<h3>' + question + '</h3>';
+            content += '<table class=table table-striped">';
+            content += '<tr><th>Answer</th><th>Amount</th></tr>';
+            $.each(answers, function(answer, value){
+                content += '<tr><td>'+ answer + '</td><td>' + value + '</td></tr>';
+            });
+            content += '</table>';
+        });
+        content += '<div>';
+        $('#content').empty().append(content);
+    } catch(err) {
+        var errmessage = '<div class="alert alert-danger" role="alert">';
+        errmessage += '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>';
+        errmessage += '<span class="sr-only">Error:</span>';
+        errmessage += 'Something went wrong... Sorry!</div>';
+        $('#content').empty().append(errmessage);
+    }
 }
 
 function updateNavBarOnClick(formid) {
@@ -92,6 +100,11 @@ function updateNavBarOnClick(formid) {
         // Remove any active class and set it to the selected
         $('.navgroup').removeClass('active');
         groupSelected.parentNode.classList.add('active');
+        
+        // Set a spinner for loading
+        $('#content').empty().append('<div id="loading" class="col-md-12"><span class="glyphicon glyphicon-refresh spinning"></span> Loading...</div>');
+        $('#load').button
+        
         if(!(formid in submissions)) {
             $.get('/api/v1/forms/'+ formid + '/submissions', function(data){
                 submissions[formid] = data;
