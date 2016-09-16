@@ -1,3 +1,19 @@
+// TODO: generate random pastel colour
+// http://stackoverflow.com/questions/43044/algorithm-to-randomly-generate-an-aesthetically-pleasing-color-palette
+
+function getRandomColours(l){
+    var results = [];
+    // Generate random colour and mix it with white
+    for(i = 0; i < l; i++) {
+        var red = Math.floor((Math.floor(Math.random()*255+1) + 255)/2);
+        var blue = Math.floor((Math.floor(Math.random()*255+1)+ 255)/2);
+        var green = Math.floor((Math.floor(Math.random()*255+1)+ 255)/2);
+        var color = 'rgba('+red+', '+green + ', ' + blue + ', 0.5)';
+        results = results.concat(color)
+    }
+    return results
+}
+
 
 // Store the form information
 var forms = {};
@@ -100,12 +116,15 @@ function displaySubmissionsFromGroup(slist, group) {
         for( j = 0; j < i; j++){
             var context = $('#chart'+j);
             var sugMax = Math.max(...chartData[j].data)+5;
+            var colors = getRandomColours(chartData[j].labels.length);
             var chart = new Chart(context, {
                 type: 'bar',
                 data: {
                     labels: chartData[j].labels,
                     datasets: [{
                         label: "# of answers",
+                        backgroundColor: colors,
+                        borderColor: colors,
                         data: chartData[j].data
                     }]
                 },
@@ -120,7 +139,7 @@ function displaySubmissionsFromGroup(slist, group) {
                         }]
                     },
                     responsive : true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
                 }
             });
         }
@@ -178,7 +197,7 @@ $(document).ready(function(jQuery) {
         var selected = $('#form-selector option:selected')[0].value
         // Set a spinner in the form groups
         //$('#formgroups').hide();
-        $("#navgroups").empty().append('<li role="presentation" class="active"><span class="glyphicon glyphicon-refresh spinning"></span><a href="#">Loading...</a></li>');
+        $("#navgroups").empty().append('<li role="presentation" class="active"><a href="#"><span class="glyphicon glyphicon-refresh spinning"></span>Loading...</a></li>');
         $.get('/api/v1/forms/' + selected, function(data){
             //Update the "Cache"
             forms[selected] = data;
