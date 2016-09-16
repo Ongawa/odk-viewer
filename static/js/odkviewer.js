@@ -74,23 +74,64 @@ function displaySubmissionsFromGroup(slist, group) {
         // Finally, list the answers
         var content = '<div class="col-md-12"><h2>' + group + '</h2></div>';
         content += '<div class="col-md-12">';
+        var i = 0;
+        var chartData = [];
         $.each(questions, function(question, answers){
-            content += '<h3>' + question + '</h3>';
+            content += '<div class="col-md-12"><h3>' + question + '</h3></div>';
+            content += '<div class="col-md-1"></div><div class="col-md-5">';
             content += '<table class=table table-striped">';
             content += '<tr><th>Answer</th><th>Amount</th></tr>';
+            var labels = [];
+            var values = [];
             $.each(answers, function(answer, value){
                 content += '<tr><td>'+ answer + '</td><td>' + value + '</td></tr>';
+                labels = labels.concat(answer);
+                values = values.concat(value);
             });
-            content += '</table>';
+            chartData = chartData.concat({labels: labels, data: values});
+            content += '</table></div><div class="col-md-1"></div>';
+            content += '<div class="col-md-5">';
+            content += '<canvas id="chart'+ i +'" width="4" height="2"></canvas></div>';
+            i +=1;
         });
         content += '<div>';
         $('#content').empty().append(content);
+        // Add the charts
+        for( j = 0; j < i; j++){
+            var context = $('#chart'+j);
+            var sugMax = Math.max(...chartData[j].data)+5;
+            var chart = new Chart(context, {
+                type: 'bar',
+                data: {
+                    labels: chartData[j].labels,
+                    datasets: [{
+                        label: "# of answers",
+                        data: chartData[j].data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                             ticks: {
+                                 beginAtZero:true,
+                                 mirror:false,
+                                 suggestedMin: 0
+                              },
+                        }]
+                    },
+                    responsive : true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
     } catch(err) {
         var errmessage = '<div class="alert alert-danger" role="alert">';
         errmessage += '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>';
         errmessage += '<span class="sr-only">Error:</span>';
         errmessage += 'Something went wrong... Sorry!</div>';
         $('#content').empty().append(errmessage);
+        console.log(err);
     }
 }
 
@@ -106,9 +147,20 @@ function updateNavBarOnClick(formid) {
         $('#load').button
         
         if(!(formid in submissions)) {
-            $.get('/api/v1/forms/'+ formid + '/submissions', function(data){
-                submissions[formid] = data;
-                displaySubmissionsFromGroup(submissions[formid], groupSelected.textContent);    
+            $.ajax({ url:'/api/v1/forms/'+ formid + '/submissions',
+                    type: 'GET',
+                    success: function(data){
+                                submissions[formid] = data;
+                                displaySubmissionsFromGroup(submissions[formid], groupSelected.textContent);    
+                              },
+                    error: function(data){
+                               var errmessage = '<div class="alert alert-danger" role="alert">';
+                               errmessage += '<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>';
+                               errmessage += '<pan class="sr-only">Error:</span>';
+                               errmessage += 'Cannot get the list of submissions... Sorry!</div>';
+                               $('#content').empty().append(errmessage);
+                               console.log(data);
+                           }
             });
         } else {
             displaySubmissionsFromGroup(submissions[formid], groupSelected.textContent);
@@ -124,7 +176,9 @@ $(document).ready(function(jQuery) {
     // The form selector
     $('#form-selector').change(function() {
         var selected = $('#form-selector option:selected')[0].value
-        $('#formgroups').hide();
+        // Set a spinner in the form groups
+        //$('#formgroups').hide();
+        $("#navgroups").empty().append('<li role="presentation" class="active"><span class="glyphicon glyphicon-refresh spinning"></span><a href="#">Loading...</a></li>');
         $.get('/api/v1/forms/' + selected, function(data){
             //Update the "Cache"
             forms[selected] = data;

@@ -38,4 +38,18 @@
 #loading {
     font-size: 20pt;
     text-align: center;
+
 }
+.table {
+    margin-top: 20px;
+}
+
+/* Options for the charts */
+
+canvas{
+    width: 100% !important;
+    max-width: 300px;
+    height: auto !important;
+    max-height: 300px;
+}
+
