@@ -16,6 +16,10 @@ MAX_ENTRIES = '100'
 
 # Helper method
 def get_id_from_ref(refid):
+    m = re.search(r'\/(\w+:\w*)', refid)
+    if m:
+        return m.group(1)
+    # else, best effort
     return refid.split('/')[-1]
 
 class OdkConnector:
@@ -91,17 +95,31 @@ class OdkConnector:
                 # The id
                 gid = get_id_from_ref(group.get('ref'))
                 # The label
-                label = group.find('{http://www.w3.org/2002/xforms}label').text
+                label = group.find('{http://www.w3.org/2002/xforms}label')
+                if label.get('ref'):
+                    lid = get_id_from_ref(label.get('ref'))
+                    label = finfo['labels'].get(lid).get('default')
+                elif label.text:
+                    label = label.text
+                else:
+                    # Default
+                    label = Mist
                 # The questions
                 questions = []
                 for q in group.getchildren():
                     if '}label' in q.tag:
                         continue
-                    qdata = {'qid': get_id_from_ref(q.get('ref')), 'options':[]}
+                    qid = get_id_from_ref(q.get('ref'))
+                    qdata = {'qid': get_id_from_ref(q.get('ref')), 'options':[]}                    
                     for qdetails in q.getchildren():
                         if '}label' in qdetails.tag:
                             # The question
-                            qdata['question'] = qdetails.text
+                            if 'ref' in qdetails.attrib:
+                                # Translated question
+                                qtid = get_id_from_ref(qdetails.get('ref'))
+                                qdata['question'] = finfo['labels'].get(qtid).get('default')
+                            else:
+                                qdata['question'] = qdetails.text
                         else:
                             # The items
                             value = qdetails.find( '{http://www.w3.org/2002/xforms}value').text

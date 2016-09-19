@@ -74,13 +74,15 @@ function displaySubmissionsFromGroup(slist, group) {
                 if (gids.lastIndexOf(g) != -1){
                     $.each(va, function(qname, answer) {
                         var qdata = getQuestion(slist.fid, group, g, qname);
-                        if (!(qdata.question in questions)){
-                            questions[qdata.question] = {};
-                            questions[qdata.question][answer] = 1;
-                        } else if (!(answer in questions[qdata.question])){
-                            questions[qdata.question][answer] = 1;
-                        } else {
-                            questions[qdata.question][answer] += 1;
+                        if (qdata) {
+                            if (!(qdata.question in questions)){
+                                questions[qdata.question] = {};
+                                questions[qdata.question][answer] = 1;
+                            } else if (!(answer in questions[qdata.question])){
+                                questions[qdata.question][answer] = 1;
+                            } else {
+                                questions[qdata.question][answer] += 1;
+                            }
                         }
                     });
                 }
@@ -125,6 +127,7 @@ function displaySubmissionsFromGroup(slist, group) {
                         label: "# of answers",
                         backgroundColor: colors,
                         borderColor: colors,
+                        borderWidth: 1,
                         data: chartData[j].data
                     }]
                 },
