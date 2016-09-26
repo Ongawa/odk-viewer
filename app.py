@@ -15,6 +15,11 @@ cache.default_timeout = config.cache_timeout
 
 conn = odkviewer.connector.OdkConnector(config.odkurl, config.odkuser, config.odkpass)
 
+@app.after_request
+def gnu_terry_pratchett(resp):
+    resp.headers.add("X-Clacks-Overhead", "GNU Terry Pratchett")
+    return resp
+
 def checkfid(formid):
     # Make sure to get the data from the forms
     if not cache.has('forms'):
